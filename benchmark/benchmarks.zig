@@ -154,10 +154,10 @@ var input_to_encode : metrics.ExponentialHistogramDataPoint = undefined;
 var input_to_decode : []u8 = undefined;
 var allocator_for_tests : std.mem.Allocator = undefined;
 
-test "benchmark" {
-    const allocator = std.testing.allocator;
+pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
-    var arena = std.heap.ArenaAllocator.init(allocator);
+    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
     defer arena.deinit();
     const arena_allocator = arena.allocator();
     allocator_for_tests = arena_allocator;
@@ -170,5 +170,5 @@ test "benchmark" {
     try bench.add("encoding benchmark", bench_encode, .{.hooks = .{ .before_each = regenInputs}});
     try bench.add("decoding benchmark", bench_decode, .{.hooks = .{ .before_each = regenInputs}});
 
-    try bench.run(std.io.getStdErr().writer());
+    try bench.run(std.io.getStdOut().writer());
 }
