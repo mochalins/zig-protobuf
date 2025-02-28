@@ -25,6 +25,12 @@
     // Paths are relative to the build root. Use the empty string (`""`) to refer to
     // the build root itself.
     // A directory listed here means that all files within, recursively, are included.
+    .dependencies = .{
+        .zbench = .{
+            .url = "git+https://github.com/hendriknielaender/zBench?ref=zig-0.13.0#825b2267d4bff274cdcb515a8d87bfd7283be19e",
+            .hash = "1220776728be0ff572a3ff108ac334f373a8efd3ce252027adb967e6796f50d4a5e0",
+        },
+    },
     .paths = .{
         // This makes *all* files, recursively, included in this package. It is generally
         // better to explicitly list the files and directories instead, to insure that

@@ -99,6 +99,12 @@ pub fn build(b: *std.Build) !void {
             .target = target,
             .optimize = optimize,
         }),
+        b.addTest(.{
+            .name = "Benchmark",
+            .root_source_file = b.path("tests/benchmarks.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     };
 
     const convertStep = RunProtocStep.create(b, b, target, .{
@@ -113,8 +119,11 @@ pub fn build(b: *std.Build) !void {
         .include_directories = &.{"tests/protos_for_test"},
     });
 
+    const zbench_module = b.dependency("zbench", .{ .target = target, .optimize = optimize }).module("zbench");
+
     for (tests) |test_item| {
         test_item.root_module.addImport("protobuf", module);
+        test_item.root_module.addImport("zbench", zbench_module);
 
         // This creates a build step. It will be visible in the `zig build --help` menu,
         // and can be selected like this: `zig build test`
@@ -288,7 +297,7 @@ fn getProtocInstallDir(
     protoc_version: []const u8,
 ) ![]const u8 {
     if (std.process.getEnvVarOwned(allocator, "PROTOC_PATH") catch null) |protoc_path| {
-        std.log.info("zig-protobuf: respecting PROTOC_PATH: {s}\n", .{ protoc_path });
+        std.log.info("zig-protobuf: respecting PROTOC_PATH: {s}\n", .{protoc_path});
         if (fileExists(protoc_path)) {
             // user has probably provided full path to protoc binary instead of proto_dir
             // also, if these fail and user explicitly provided custom path, we probably don't want to download stuff
