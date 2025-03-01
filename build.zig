@@ -143,10 +143,9 @@ pub fn build(b: *std.Build) !void {
 
     bootstrap.dependOn(&bootstrapConversion.step);
 
-    const zbench_module = b.dependency("zbench", .{ .target = target, .optimize = optimize }).module("zbench");
+    const zbench_module = b.dependency("zbench", .{ .target = target, .optimize = .ReleaseFast }).module("zbench");
     
     const benchmark_step = b.step("benchmark", "Run benchmarks");
-    benchmark_step.dependOn(&convertStep.step);
 
     const benchmark_exe = b.addExecutable(.{
         .name = "benchmark",
@@ -164,6 +163,31 @@ pub fn build(b: *std.Build) !void {
         .include_directories = &.{"tests/protos_for_test"},
     });
     benchmark_exe.step.dependOn(&convertForBenchmarkStep.step);
+    
+    // Add the generate_dataset step and executable
+    const generate_dataset_step = b.step("generate-dataset", "Generate benchmark dataset");
+    
+    var convertForDatasetStep = RunProtocStep.create(b, b, target, .{
+        .destination_directory = b.path("benchmark/generated"),
+        .source_files = &.{"tests/protos_for_test/benchmark_data.proto", "tests/protos_for_test/opentelemetry/proto/metrics/v1/metrics.proto", "tests/protos_for_test/opentelemetry/proto/common/v1/common.proto"},
+        .include_directories = &.{"tests/protos_for_test"},
+    });
+    
+
+    const generate_dataset_exe = b.addExecutable(.{
+        .name = "generate_dataset",
+        .root_source_file = b.path("benchmark/generate_dataset.zig"),
+        .target = target,
+        .optimize = .ReleaseFast,
+    });
+    
+    generate_dataset_exe.root_module.addImport("protobuf", module);
+    generate_dataset_exe.step.dependOn(&convertForDatasetStep.step);
+
+    // Then run the executable
+    const run_generate = b.addRunArtifact(generate_dataset_exe);
+    generate_dataset_step.dependOn(&run_generate.step);
+
 }
 
 pub const RunProtocStep = struct {
