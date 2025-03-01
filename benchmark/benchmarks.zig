@@ -13,36 +13,36 @@ fn bench_encode(allocator: std.mem.Allocator) void {
 }
 
 fn bench_decode(allocator: std.mem.Allocator) void {
-    _ = metrics.ExponentialHistogramDataPoint.decode(input_to_decode, allocator) catch null;
+    _ = benchmark_data.BenchmarkData.decode(input_to_decode, allocator) catch null;
 }
 
 const DataSet = struct {
-    data : benchmark_data.BenchmarkData,
-    encoded : []u8,
+    data: benchmark_data.BenchmarkData,
+    encoded: []u8,
 };
 
 fn loadFixedDataset(allocator: std.mem.Allocator) !?DataSet {
     // Try to open the test.data file
     std.debug.print("Loading dataset from {s}...\n", .{DATASET_FILENAME});
-    
+
     const file = try std.fs.cwd().openFile(DATASET_FILENAME, .{});
     defer file.close();
-    
+
     // Get file size and allocate buffer
     const size = (try file.stat()).size;
     std.debug.print("Dataset file size: {d} bytes\n", .{size});
-    
+
     const buffer = try allocator.alloc(u8, size);
-    
+
     _ = try file.readAll(buffer); // Read the entire file into the buffer
     std.debug.print("Read file contents\n", .{});
-    
+
     const data = try benchmark_data.BenchmarkData.decode(buffer, allocator);
     if (data.histogram_points.items.len == 0) {
         std.debug.print("Dataset contains no histogram points\n", .{});
         return null;
     }
-    
+
     std.debug.print("Loaded dataset with {d} histogram points\n", .{data.histogram_points.items.len});
     // Use the first histogram point from the dataset
     return DataSet{
@@ -51,8 +51,8 @@ fn loadFixedDataset(allocator: std.mem.Allocator) !?DataSet {
     };
 }
 
-var input_to_encode : benchmark_data.BenchmarkData = undefined;
-var input_to_decode : []u8 = undefined;
+var input_to_encode: benchmark_data.BenchmarkData = undefined;
+var input_to_decode: []u8 = undefined;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -60,7 +60,7 @@ pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(gpa.allocator());
     defer arena.deinit();
     const arena_allocator = arena.allocator();
-    
+
     // Try to load dataset from file
     if (try loadFixedDataset(arena_allocator)) |fixed_data| {
         // Use the loaded dataset
@@ -75,8 +75,8 @@ pub fn main() !void {
     var bench = zbench.Benchmark.init(arena_allocator, .{});
     defer bench.deinit();
 
-    try bench.add("encoding benchmark", bench_encode, .{.iterations = 100000});
-    try bench.add("decoding benchmark", bench_decode, .{.iterations = 100000});
+    try bench.add("encoding benchmark", bench_encode, .{});
+    try bench.add("decoding benchmark", bench_decode, .{});
 
     try bench.run(std.io.getStdOut().writer());
 }

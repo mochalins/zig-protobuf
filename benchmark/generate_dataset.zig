@@ -15,9 +15,9 @@ pub fn generateRandomManagedString(allocator: std.mem.Allocator) AllocatorError!
 
     // Generate random string length between 1-20 chars
     const len = std.crypto.random.intRangeAtMost(usize, 1, 20);
-    
+
     var str = try allocator.alloc(u8, len);
-    
+
     // Fill with random ASCII letters
     for (0..len) |i| {
         str[i] = std.crypto.random.intRangeAtMost(u8, 'a', 'z');
@@ -28,7 +28,7 @@ pub fn generateRandomManagedString(allocator: std.mem.Allocator) AllocatorError!
 
 fn generateRandomAnyValue(allocator: std.mem.Allocator) AllocatorError!common.AnyValue {
     const value_case = std.crypto.random.intRangeAtMost(usize, 0, 6);
-    const to_enum : common.AnyValue._value_case = @enumFromInt(value_case);
+    const to_enum: common.AnyValue._value_case = @enumFromInt(value_case);
 
     return switch (to_enum) {
         .string_value => .{ .value = .{ .string_value = try generateRandomManagedString(allocator) } },
@@ -62,13 +62,12 @@ fn generateRandomKeyValueList(allocator: std.mem.Allocator) AllocatorError!commo
 }
 
 fn generateRandomKeyValue(allocator: std.mem.Allocator) AllocatorError!common.KeyValue {
-    const value : ?common.AnyValue = if(std.crypto.random.boolean())
-        try generateRandomAnyValue(allocator) else null;
+    const value: ?common.AnyValue = if (std.crypto.random.boolean())
+        try generateRandomAnyValue(allocator)
+    else
+        null;
 
-    return common.KeyValue{
-        .key = try generateRandomManagedString(allocator),
-        .value = value
-    };
+    return common.KeyValue{ .key = try generateRandomManagedString(allocator), .value = value };
 }
 
 fn generateRandomBuckets(allocator: std.mem.Allocator) AllocatorError!metrics.ExponentialHistogramDataPoint.Buckets {
@@ -121,7 +120,7 @@ pub fn generateRandomExponentialHistogramDataPoint(allocator: std.mem.Allocator)
     point.sum = std.crypto.random.float(f64);
     point.scale = std.crypto.random.int(i32);
     point.zero_count = std.crypto.random.int(u64);
-    
+
     point.positive = try nullOrItem(metrics.ExponentialHistogramDataPoint.Buckets, generateRandomBuckets, allocator);
     point.negative = try nullOrItem(metrics.ExponentialHistogramDataPoint.Buckets, generateRandomBuckets, allocator);
 
@@ -134,8 +133,7 @@ pub fn generateRandomExponentialHistogramDataPoint(allocator: std.mem.Allocator)
     return point;
 }
 
-
-const DATASET_SIZE = 100;
+const DATASET_SIZE = 10;
 const OUTPUT_FILENAME = "test.data";
 
 pub fn main() !void {
@@ -152,7 +150,7 @@ pub fn main() !void {
 
     for (0..DATASET_SIZE) |i| {
         if (i % 10 == 0) {
-            std.debug.print("Generated {d}/{d} entries\n", .{i, DATASET_SIZE});
+            std.debug.print("Generated {d}/{d} entries\n", .{ i, DATASET_SIZE });
         }
         try data.histogram_points.append(try generateRandomExponentialHistogramDataPoint(arena_allocator));
     }
@@ -167,6 +165,6 @@ pub fn main() !void {
     defer file.close();
 
     try file.writeAll(encoded_data);
-    
-    std.debug.print("Dataset generation complete: {d} bytes written to {s}\n", .{encoded_data.len, OUTPUT_FILENAME});
-} 
+
+    std.debug.print("Dataset generation complete: {d} bytes written to {s}\n", .{ encoded_data.len, OUTPUT_FILENAME });
+}
