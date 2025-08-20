@@ -479,7 +479,10 @@ pub fn decodeRepeated(
             // Submessages are length-delimited, and cannot be packed.
             std.debug.assert(options.bytes != null);
 
-            try result.append(allocator, try .init(allocator));
+            try result.append(
+                allocator,
+                try protobuf.init(Result, allocator),
+            );
             errdefer result.items[result.items.len - 1].deinit(allocator);
             const msg = &result.items[result.items.len - 1];
             const consumed = try decodeMessage(
@@ -779,7 +782,7 @@ pub fn decodeMessage(
                                 );
 
                                 @field(result, field.name).?.* =
-                                    try .init(allocator);
+                                    try protobuf.init(SubMessage, allocator);
                                 break :b true;
                             }
                             break :b false;
@@ -804,10 +807,11 @@ pub fn decodeMessage(
                             consumed += message_consumed;
                         }
                     } else {
+                        const SubMessage = field_ti.optional.child;
                         const is_null = b: {
                             if (@field(result, field.name) == null) {
                                 @field(result, field.name) =
-                                    try .init(allocator);
+                                    try protobuf.init(SubMessage, allocator);
                                 break :b true;
                             }
                             break :b false;
@@ -1037,7 +1041,10 @@ pub fn decodeMessage(
                                             @unionInit(
                                                 OneOf,
                                                 oo_field.name,
-                                                try .init(allocator),
+                                                try protobuf.init(
+                                                    SubMessage,
+                                                    allocator,
+                                                ),
                                             );
                                     }
                                     errdefer if (is_null) {
